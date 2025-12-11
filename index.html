@@ -1,180 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Fish Recognizer</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #e6dfd4;
-            font-family: Arial, sans-serif;
-            color: #2e2b23;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fish Recognizer</title>
 
-        header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 15px 20px;
-            background-color: #c4b89c;
-            border-bottom: 3px solid #8a7c62;
-        }
+<!-- Rustic Minimal Styling -->
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #e6e2d3;
+        color: #2e2a24;
+    }
 
-        .logo {
-            width: 55px;
-            height: 55px;
-        }
+    header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px;
+        background: #4f463b;
+        color: white;
+    }
 
-        h1 {
-            font-size: 22px;
-            margin: 0;
-        }
+    /* Simple rustic fish-on-line SVG icon */
+    .logo svg {
+        width: 48px;
+        height: 48px;
+    }
 
-        .container {
-            max-width: 750px;
-            margin: 20px auto;
-            padding: 0 15px;
-            text-align: center;
-        }
+    .container {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+        text-align: center;
+    }
 
-        .description {
-            background-color: #d4c9b5;
-            border: 2px solid #8a7c62;
-            padding: 12px;
-            margin-bottom: 18px;
-        }
+    .controls {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
 
-        button {
-            background-color: #7b6f55;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            margin: 6px;
-            cursor: pointer;
-            font-size: 15px;
-        }
+    button, input[type="file"] {
+        background: #5e7152;
+        border: none;
+        padding: 10px 18px;
+        color: white;
+        font-size: 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
 
-        button:hover {
-            background-color: #675d48;
-        }
+    button:hover, input[type="file"]:hover {
+        background: #526347;
+    }
 
-        #preview-container {
-            margin-top: 15px;
-        }
+    #preview {
+        margin-top: 18px;
+        max-width: 280px;
+        border-radius: 6px;
+    }
 
-        #preview {
-            width: 250px;
-            height: 250px;
-            object-fit: contain;
-            border: 2px solid #8a7c62;
-            background-color: #f3ede3;
-        }
+    #webcam-container canvas {
+        border-radius: 6px;
+    }
 
-        #webcam-container canvas {
-            border: 2px solid #8a7c62;
-            background-color: #f3ede3;
-        }
-
-        #label-container {
-            margin-top: 10px;
-            background-color: #d4c9b5;
-            border: 2px solid #8a7c62;
-            padding: 10px;
-        }
-    </style>
+    #label-container {
+        margin-top: 15px;
+        font-size: 18px;
+    }
+</style>
 </head>
+
 <body>
 
 <header>
-    <!-- Rustic realistic style fish on a hook SVG -->
-    <svg class="logo" viewBox="0 0 60 60">
-        <path d="M30 5 L30 25" stroke="#3a3a3a" stroke-width="2"/>
-        <path d="M25 25 Q30 33 35 25" fill="none" stroke="#3a3a3a" stroke-width="2"/>
-        <ellipse cx="30" cy="35" rx="15" ry="8" fill="#6f7f62" stroke="#3a3a3a" stroke-width="2"/>
-        <circle cx="36" cy="34" r="2" fill="#2e2b23"/>
-        <path d="M15 35 L5 30 L5 40 Z" fill="#6f7f62" stroke="#3a3a3a" stroke-width="2"/>
-    </svg>
-
-    <h1>Fish Recognizer</h1>
+    <div class="logo">
+        <!-- Clean, simple SVG logo -->
+        <svg viewBox="0 0 64 64">
+            <path d="M10 10 C20 20, 20 40, 10 50" stroke="white" stroke-width="3" fill="none"/>
+            <ellipse cx="40" cy="32" rx="18" ry="10" fill="none" stroke="white" stroke-width="3"/>
+            <circle cx="47" cy="30" r="2" fill="white"/>
+        </svg>
+    </div>
+    <h2>Fish Recognizer</h2>
 </header>
 
 <div class="container">
-    <div class="description">
-        This tool helps identify fish species from a photo or webcam snapshot.  
-        It can be useful for new anglers or anyone who wants a quick check on a catch.
+    <p>A quick tool that helps you identify fish from a photo or your webcam.</p>
+
+    <div class="controls">
+        <button onclick="init()">Start Webcam</button>
+        <label>
+            <input type="file" accept="image/*" onchange="loadImage(event)">
+            Upload Image
+        </label>
     </div>
 
-    <button onclick="initWebcam()">Start Webcam</button>
-    <button onclick="uploadInput.click()">Upload Image</button>
-    <input type="file" id="uploadInput" accept="image/*" style="display: none" onchange="loadImage(event)">
-
-    <div id="preview-container">
-        <img id="preview" src="" alt="Image Preview">
-    </div>
+    <img id="preview" style="display:none;">
 
     <div id="webcam-container"></div>
     <div id="label-container"></div>
 </div>
 
+<!-- Teachable Machine Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
 <script>
     const URL = "./my_model/";
+    let model, webcam, labelContainer, maxPredictions;
 
-    let model, maxPredictions;
-    let webcam = null;
-    const labelContainer = document.getElementById("label-container");
-    const preview = document.getElementById("preview");
-    const uploadInput = document.getElementById("uploadInput");
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
 
-    async function loadModel() {
+        // webcam
+        const flip = true;
+        webcam = new tmImage.Webcam(240, 240, flip);
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        setupLabelContainer();
+    }
+
+    function setupLabelContainer() {
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    async function loop() {
+        webcam.update();
+        await predict(webcam.canvas);
+        window.requestAnimationFrame(loop);
+    }
+
+    async function loadImage(event) {
+        const imgEl = document.getElementById("preview");
+        imgEl.src = URL.createObjectURL(event.target.files[0]);
+        imgEl.style.display = "block";
+
         if (!model) {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
-            labelContainer.innerHTML = "";
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
-            }
+            setupLabelContainer();
         }
+
+        await imgEl.onload;
+        predict(imgEl);
     }
 
-    async function initWebcam() {
-        await loadModel();
-        if (webcam) return;
-
-        webcam = new tmImage.Webcam(250, 250, true);
-        await webcam.setup();
-        await webcam.play();
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-        window.requestAnimationFrame(loop);
-    }
-
-    async function loop() {
-        if (webcam) {
-            webcam.update();
-            await predict(webcam.canvas);
-            window.requestAnimationFrame(loop);
-        }
-    }
-
-    async function loadImage(event) {
-        await loadModel();
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            predict(preview);
-        }
-        reader.readAsDataURL(file);
-    }
-
-    async function predict(input) {
-        const prediction = await model.predict(input);
+    async function predict(source) {
+        const prediction = await model.predict(source);
         for (let i = 0; i < maxPredictions; i++) {
             labelContainer.childNodes[i].innerHTML =
                 prediction[i].className + ": " + prediction[i].probability.toFixed(2);
