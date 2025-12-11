@@ -1,33 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fish Recognizer</title>
 
-<!-- Rustic Minimal Styling -->
 <style>
     body {
         margin: 0;
-        padding: 0;
-        font-family: "Segoe UI", sans-serif;
-        background: #e6e2d3;
-        color: #2e2a24;
+        font-family: Inter, Arial, sans-serif;
+        background: #f2eee6;
+        color: #2b2b2b;
     }
 
     header {
+        background: #4a5a47;
+        padding: 18px 24px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 18px;
-        background: #4f463b;
+        gap: 16px;
         color: white;
     }
 
-    /* Simple rustic fish-on-line SVG icon */
     .logo svg {
-        width: 48px;
-        height: 48px;
+        width: 46px;
+        height: 46px;
     }
 
     .container {
@@ -37,40 +34,49 @@
         text-align: center;
     }
 
-    .controls {
-        margin: 20px 0;
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        flex-wrap: wrap;
+    .card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 24px;
+        margin-top: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
     button, input[type="file"] {
+        padding: 12px 20px;
         background: #5e7152;
-        border: none;
-        padding: 10px 18px;
         color: white;
-        font-size: 16px;
-        border-radius: 4px;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
         cursor: pointer;
     }
 
     button:hover, input[type="file"]:hover {
-        background: #526347;
+        background: #4f6144;
+    }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
     }
 
     #preview {
-        margin-top: 18px;
         max-width: 280px;
-        border-radius: 6px;
+        border-radius: 8px;
+        margin-top: 18px;
+        display: none;
     }
 
     #webcam-container canvas {
-        border-radius: 6px;
+        border-radius: 8px;
     }
 
     #label-container {
-        margin-top: 15px;
+        margin-top: 16px;
         font-size: 18px;
     }
 </style>
@@ -80,34 +86,34 @@
 
 <header>
     <div class="logo">
-        <!-- Clean, simple SVG logo -->
         <svg viewBox="0 0 64 64">
-            <path d="M10 10 C20 20, 20 40, 10 50" stroke="white" stroke-width="3" fill="none"/>
-            <ellipse cx="40" cy="32" rx="18" ry="10" fill="none" stroke="white" stroke-width="3"/>
-            <circle cx="47" cy="30" r="2" fill="white"/>
+            <path d="M12 8 C22 20, 22 44, 12 56" stroke="white" stroke-width="3" fill="none"/>
+            <ellipse cx="42" cy="32" rx="18" ry="10" fill="none" stroke="white" stroke-width="3"/>
+            <circle cx="48" cy="30" r="2" fill="white"/>
         </svg>
     </div>
-    <h2>Fish Recognizer</h2>
+    <h1 style="margin:0; font-size:24px;">Fish Recognizer</h1>
 </header>
 
 <div class="container">
-    <p>A quick tool that helps you identify fish from a photo or your webcam.</p>
+    <div class="card">
+        <p style="font-size:17px;">Upload a fish photo or use your camera to identify the species.</p>
 
-    <div class="controls">
-        <button onclick="init()">Start Webcam</button>
-        <label>
-            <input type="file" accept="image/*" onchange="loadImage(event)">
-            Upload Image
-        </label>
+        <div class="controls">
+            <button onclick="init()">Use Camera</button>
+            <label>
+                <input type="file" accept="image/*" onchange="loadImage(event)">
+                Upload Photo
+            </label>
+        </div>
+
+        <img id="preview">
+
+        <div id="webcam-container"></div>
+        <div id="label-container"></div>
     </div>
-
-    <img id="preview" style="display:none;">
-
-    <div id="webcam-container"></div>
-    <div id="label-container"></div>
 </div>
 
-<!-- Teachable Machine Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
@@ -115,23 +121,14 @@
     const URL = "./my_model/";
     let model, webcam, labelContainer, maxPredictions;
 
-    async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        // webcam
-        const flip = true;
-        webcam = new tmImage.Webcam(240, 240, flip);
-        await webcam.setup();
-        await webcam.play();
-        window.requestAnimationFrame(loop);
-
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-
-        setupLabelContainer();
+    async function loadModelIfNeeded() {
+        if (!model) {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            setupLabelContainer();
+        }
     }
 
     function setupLabelContainer() {
@@ -142,6 +139,23 @@
         }
     }
 
+    async function init() {
+        await loadModelIfNeeded();
+
+        const flip = true;
+        webcam = new tmImage.Webcam(260, 260, flip);
+
+        await webcam.setup();
+        await webcam.play();
+
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        document.getElementById("preview").style.display = "none";
+
+        window.requestAnimationFrame(loop);
+    }
+
     async function loop() {
         webcam.update();
         await predict(webcam.canvas);
@@ -149,27 +163,26 @@
     }
 
     async function loadImage(event) {
+        await loadModelIfNeeded();
+
         const imgEl = document.getElementById("preview");
         imgEl.src = URL.createObjectURL(event.target.files[0]);
         imgEl.style.display = "block";
 
-        if (!model) {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
-            setupLabelContainer();
-        }
+        document.getElementById("webcam-container").innerHTML = "";
 
         await imgEl.onload;
+
         predict(imgEl);
     }
 
     async function predict(source) {
         const prediction = await model.predict(source);
-        for (let i = 0; i < maxPredictions; i++) {
+
+        for (let i = 0; i < prediction.length; i++) {
+            const item = prediction[i];
             labelContainer.childNodes[i].innerHTML =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                item.className + ": " + item.probability.toFixed(2);
         }
     }
 </script>
