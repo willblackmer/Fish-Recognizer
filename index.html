@@ -1,59 +1,594 @@
-<div>Teachable Machine Image Model</div>
-<button type="button" onclick="init()">Start</button>
-<div id="webcam-container"></div>
-<div id="label-container"></div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CatchFinder • Fish Recognizer</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<!-- TensorFlow and Teachable Machine -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-<script type="text/javascript">
-    // More API functions here:
-    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
 
-    // the link to your model provided by Teachable Machine export panel
-    const URL = "./my_model/";
+<style>
+  :root{
+    --wood-1: #3b2f2a;
+    --wood-2: #6f4f3a;
+    --moss: #6c8b5a;
+    --lake: #6fa6b8;
+    --cream: #f6efe6;
+    --accent: #c99858;
+    --glass: rgba(255,255,255,0.06);
+    --card-shadow: 0 8px 30px rgba(17,12,8,0.45);
+  }
 
-    let model, webcam, labelContainer, maxPredictions;
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:
+      radial-gradient(1200px 400px at 10% 20%, rgba(108,139,106,0.12), transparent 10%),
+      linear-gradient(180deg, #e8efe8 0%, #f3efe6 30%, #efe9de 100%);
+    color:var(--wood-1);
+  }
 
-    // Load the image model and setup the webcam
-    async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
+  /* header / hero */
+  .hero{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:28px 24px;
+    background: linear-gradient(90deg, rgba(111,79,58,0.06), rgba(112,84,46,0.03));
+    border-bottom: 1px solid rgba(59,47,42,0.06);
+    box-shadow: var(--card-shadow);
+  }
+  .logo-wrap{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo{
+    width:84px;
+    height:84px;
+    background: linear-gradient(180deg, #f9f6ef, #efe6d6);
+    border-radius:12px;
+    padding:10px;
+    box-shadow: 0 6px 18px rgba(39,29,23,0.18), inset 0 2px 0 rgba(255,255,255,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border: 2px solid rgba(59,47,42,0.06);
+  }
+  .brand{
+    display:flex;
+    flex-direction:column;
+  }
+  .brand h1{
+    margin:0;
+    font-family: "EB Garamond", serif;
+    font-weight:600;
+    font-size:22px;
+    color:var(--wood-1);
+    letter-spacing:0.4px;
+  }
+  .brand p{
+    margin:4px 0 0 0;
+    font-size:13px;
+    color:#5a4a42;
+  }
 
-        // load the model and metadata
-        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
-        // or files from your local hard drive
-        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
+  .container{
+    max-width:1100px;
+    margin:26px auto;
+    padding:20px;
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap:22px;
+  }
 
-        // Convenience function to setup a webcam
-        const flip = true; // whether to flip the webcam
-        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-        await webcam.setup(); // request access to the webcam
-        await webcam.play();
-        window.requestAnimationFrame(loop);
+  /* left column card */
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.92));
+    border-radius:12px;
+    padding:16px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(59,47,42,0.04);
+  }
 
-        // append elements to the DOM
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-        labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) { // and class labels
-            labelContainer.appendChild(document.createElement("div"));
-        }
+  .theme-art{
+    width:100%;
+    height:140px;
+    border-radius:10px;
+    overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(106,156,142,0.14), rgba(90,63,48,0.06)),
+      url('data:image/svg+xml;utf8,\
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">\
+      <defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="%236fa6b8"/><stop offset="1" stop-color="%23e9efe8"/></linearGradient></defs>\
+      <rect width="800" height="200" fill="%23cfe6e8"/>\
+      <g transform="translate(0,20)" fill="%236a8b63" opacity="0.85">\
+      <path d="M30 170 L90 30 L150 170 Z" />\
+      <path d="M110 170 L170 40 L230 170 Z" />\
+      <path d="M300 170 L360 20 L420 170 Z" />\
+      <path d="M500 170 L560 40 L620 170 Z" />\
+      </g>\
+      </svg>') center/cover no-repeat;
+    display:flex;
+    align-items:flex-end;
+    padding:12px;
+    color:var(--cream);
+    font-weight:600;
+    text-shadow: 0 2px 6px rgba(14,9,6,0.5);
+  }
+  .muted{
+    color:#5c4f47;
+    font-size:14px;
+  }
+
+  /* controls */
+  .controls{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:12px;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:linear-gradient(180deg,var(--wood-2),var(--wood-1));
+    color:#fff;
+    padding:10px 14px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+    box-shadow: 0 6px 18px rgba(59,47,42,0.25);
+  }
+  .btn.secondary{
+    background:linear-gradient(180deg,var(--moss),#4f6c4e);
+    box-shadow:none;
+  }
+  .btn.ghost{
+    background:transparent;
+    color:var(--wood-1);
+    border:1px solid rgba(59,47,42,0.06);
+    box-shadow:none;
+  }
+
+  .flex-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  /* preview and webcam */
+  #preview, #webcam-canvas{
+    width:100%;
+    max-width:380px;
+    border-radius:10px;
+    border:1px solid rgba(59,47,42,0.06);
+    background:var(--glass);
+  }
+
+  /* prediction results */
+  .results{
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .result-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .prob-bar{
+    flex:1;
+    height:12px;
+    background:linear-gradient(90deg,#eee,#ddd);
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .prob-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--lake),#2f6f7a);
+    border-radius:8px;
+    transition: width 350ms ease;
+  }
+  .label-name{
+    min-width:110px;
+    font-weight:600;
+    color:var(--wood-1);
+  }
+
+  /* right column info */
+  .info{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  h2{
+    margin:0;
+    font-family:"EB Garamond", serif;
+    color:var(--wood-1);
+  }
+  p.lead{
+    margin:0;
+    color:#55463f;
+  }
+  .instructions{
+    background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+    padding:14px;
+    border-radius:10px;
+    border:1px solid rgba(59,47,42,0.04);
+  }
+
+  footer{
+    text-align:center;
+    margin-top:20px;
+    color:#726257;
+    font-size:13px;
+  }
+
+  /* responsive */
+  @media (max-width:980px){
+    .container{ grid-template-columns: 1fr; padding:12px; }
+    .hero{ flex-direction:column; gap:8px; align-items:flex-start;}
+    .logo{ width:72px; height:72px;}
+  }
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="logo-wrap">
+    <div class="logo" role="img" aria-label="CatchFinder logo">
+      <!-- Inline SVG logo: fish being caught, realistic rustic style simplified -->
+      <svg viewBox="0 0 120 120" width="64" height="64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#6fa6b8"/>
+            <stop offset="1" stop-color="#3b7b7f"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0" x2="1">
+            <stop offset="0" stop-color="#c99b5c"/>
+            <stop offset="1" stop-color="#a66e38"/>
+          </linearGradient>
+        </defs>
+
+        <!-- hook -->
+        <path d="M84 12 C84 16,72 16,72 28" fill="none" stroke="#7a5a3b" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="84" cy="12" r="2.8" fill="#7a5a3b"/>
+
+        <!-- line -->
+        <path d="M74 29 L72 38" stroke="#7a5a3b" stroke-width="1.5" fill="none"/>
+
+        <!-- fish body -->
+        <g transform="translate(6,18) scale(0.86)">
+          <ellipse cx="54" cy="36" rx="34" ry="20" fill="url(#g1)" stroke="#2f5e62" stroke-width="2"/>
+          <!-- stripes -->
+          <path d="M35 26 C42 30,40 44,32 46" fill="none" stroke="#2b4a4d" stroke-width="2" opacity="0.7"/>
+          <path d="M45 22 C50 28,48 40,42 42" fill="none" stroke="#2b4a4d" stroke-width="1.6" opacity="0.65"/>
+          <!-- tail -->
+          <path d="M82 30 L98 18 L92 48 Z" fill="#3b7b7f" stroke="#2f5e62" stroke-width="1.8"/>
+          <!-- eye -->
+          <circle cx="30" cy="30" r="3.5" fill="#fff"/>
+          <circle cx="30.5" cy="30.3" r="1.6" fill="#172021"/>
+          <!-- hook meeting mouth -->
+          <path d="M71 40 C68 38,64 35,53 34" stroke="#7a5a3b" stroke-width="1.6" fill="none"/>
+        </g>
+
+        <!-- small rustic badge -->
+        <rect x="4" y="82" width="112" height="24" rx="6" fill="url(#g2)" opacity="0.95"/>
+        <text x="60" y="98" text-anchor="middle" fill="#fff" font-size="12" font-family="Inter" font-weight="700">CATCHFINDER</text>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>CatchFinder</h1>
+      <p>Fish Recognizer, Northwest cabin edition</p>
+    </div>
+  </div>
+
+  <div style="margin-left:auto;">
+    <small class="muted">Rustic theme, lake and cabin vibes, built for anglers and curious explorers</small>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- left column: controls + preview -->
+  <section class="card" aria-label="Model controls and preview">
+    <div class="theme-art">
+      <div>
+        <div style="font-size:18px">Northwest Lake</div>
+        <div style="font-size:12px; opacity:0.95">Wood cabin, pine trees, and fresh catches</div>
+      </div>
+    </div>
+
+    <div class="controls" style="margin-top:12px;">
+      <div class="flex-row">
+        <button id="start-webcam" class="btn" type="button">Start Webcam</button>
+        <button id="stop-webcam" class="btn ghost" type="button" disabled>Stop Webcam</button>
+      </div>
+
+      <div class="flex-row">
+        <label class="btn secondary" for="file-input" style="cursor:pointer;">
+          Upload Image
+          <input id="file-input" accept="image/*" type="file" style="display:none" />
+        </label>
+        <button id="run-predict" class="btn" type="button" disabled>Run Prediction</button>
+      </div>
+
+      <div style="margin-top:6px; font-size:13px; color:#51453e">
+        <strong>Model source:</strong> <span id="model-path">./my_model/</span>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap;">
+      <!-- webcam canvas -->
+      <div style="flex:1; min-width:200px;">
+        <canvas id="webcam-canvas" width="320" height="240" style="display:none;"></canvas>
+      </div>
+
+      <!-- preview -->
+      <div style="flex:1; min-width:200px;">
+        <img id="preview" alt="Selected image preview" style="display:block; object-fit:cover; height:240px;" />
+      </div>
+    </div>
+
+    <!-- predictions -->
+    <div class="results card" style="margin-top:14px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:700">Recognition</div>
+        <div style="font-size:13px; color:#6b584f">Probabilities shown</div>
+      </div>
+      <div id="label-list" style="margin-top:8px"></div>
+
+      <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+        <button id="clear-preview" class="btn ghost" type="button">Clear Image</button>
+        <button id="reload-model" class="btn ghost" type="button">Reload Model</button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; font-size:13px; color:#5c4f47">
+      Tip, export your trained Teachable Machine image model into a folder named <code>my_model</code>, and serve it alongside this page.
+    </div>
+  </section>
+
+  <!-- right column: info and instructions -->
+  <aside class="info">
+    <div class="card instructions" aria-live="polite">
+      <h2>What this tool does</h2>
+      <p class="lead">CatchFinder identifies common fish types from an image you supply. It was designed for anglers who want a quick confirmation of what they caught, park rangers, educators, and curious learners.</p>
+      <hr />
+      <h3 style="margin:8px 0 6px 0">How to use</h3>
+      <ol style="padding-left:18px; margin-top:6px; color:#4e3f36">
+        <li>Export your Teachable Machine image model and place it in a folder called <code>my_model</code> beside this HTML file.</li>
+        <li>Click <strong>Start Webcam</strong> to use your camera, or click <strong>Upload Image</strong> to pick a photo from your device. You will see a preview of the photo.</li>
+        <li>When you have the image or webcam frame you want, click <strong>Run Prediction</strong>. Results show below with probability bars.</li>
+        <li>If you change the model files, click <strong>Reload Model</strong> to pick them up again.</li>
+      </ol>
+
+      <h3 style="margin:8px 0 6px 0">Model notes</h3>
+      <p style="color:#56463e; margin:0">
+        Your Teachable Machine model should contain at least three classes. The UI automatically lists all classes from the model, and shows probabilities for each. The model runs entirely in your browser, no images are uploaded to a server.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Who benefits</h2>
+      <p class="muted">
+        Recreational anglers who need quick identification, educators teaching local ecology, park staff checking species, and anyone curious about fish found while camping by a lake.
+      </p>
+
+      <h3 style="margin-top:10px">Accessibility and privacy</h3>
+      <p class="muted" style="font-size:13px; margin-top:6px">
+        Images remain in your browser and never leave your device, unless you choose to share them. The model performs on-device inference for speed and privacy.
+      </p>
+    </div>
+
+    <footer>
+      Built with Teachable Machine and TensorFlow.js, styled for a rustic cabin vibe.
+    </footer>
+  </aside>
+</main>
+
+<script>
+  // default model path
+  const MODEL_URL = './my_model/';
+
+  let model, webcam, maxPredictions;
+  const previewEl = document.getElementById('preview');
+  const webcamCanvas = document.getElementById('webcam-canvas');
+  const startWebcamBtn = document.getElementById('start-webcam');
+  const stopWebcamBtn = document.getElementById('stop-webcam');
+  const runPredictBtn = document.getElementById('run-predict');
+  const fileInput = document.getElementById('file-input');
+  const labelList = document.getElementById('label-list');
+  const clearPreviewBtn = document.getElementById('clear-preview');
+  const reloadModelBtn = document.getElementById('reload-model');
+
+  // show model path
+  document.getElementById('model-path').textContent = MODEL_URL;
+
+  // utility to enable or disable UI based on model status
+  function setModelReady(ready) {
+    runPredictBtn.disabled = !ready;
+    reloadModelBtn.disabled = !ready;
+  }
+
+  // load model
+  async function loadModel() {
+    setModelReady(false);
+    try {
+      const modelURL = MODEL_URL + 'model.json';
+      const metadataURL = MODEL_URL + 'metadata.json';
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      // build label UI
+      labelList.innerHTML = '';
+      for (let i = 0; i < maxPredictions; i++) {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        row.innerHTML = \`
+          <div class="label-name" id="label-\${i}">\${model.getClassLabels()[i]}</div>
+          <div class="prob-bar" aria-hidden="true"><div id="bar-\${i}" class="prob-fill"></div></div>
+          <div style="width:56px; text-align:right; font-weight:600" id="pct-\${i}">0%</div>
+        \`;
+        labelList.appendChild(row);
+      }
+
+      setModelReady(true);
+    } catch (err) {
+      alert('Failed to load model from ' + MODEL_URL + '. Make sure the folder exists and contains model.json and metadata.json.');
+      console.error(err);
+      setModelReady(false);
+    }
+  }
+
+  // initial load
+  loadModel();
+
+  // webcam helpers
+  let streaming = false;
+  async function startWebcam() {
+    if (streaming) return;
+    try {
+      webcam = new tmImage.Webcam(320, 240, true); // width, height, flip
+      await webcam.setup();
+      await webcam.play();
+      streaming = true;
+      webcam.canvas.id = 'webcamCanvasInternal';
+      webcamCanvas.width = webcam.canvas.width;
+      webcamCanvas.height = webcam.canvas.height;
+      webcamCanvas.style.display = 'block';
+      // draw webcam to our canvas so we can pass it to model
+      const ctx = webcamCanvas.getContext('2d');
+      function drawLoop() {
+        if (!streaming) return;
+        ctx.drawImage(webcam.canvas, 0, 0, webcamCanvas.width, webcamCanvas.height);
+        requestAnimationFrame(drawLoop);
+      }
+      drawLoop();
+      startWebcamBtn.disabled = true;
+      stopWebcamBtn.disabled = false;
+      // show webcam live as preview if no file chosen
+      previewEl.style.display = 'none';
+    } catch (err) {
+      alert('Could not access webcam. Make sure permission is granted and a camera is available.');
+      console.error(err);
+    }
+  }
+
+  function stopWebcam() {
+    if (!streaming) return;
+    try {
+      webcam.stop();
+    } catch (e) { /* ignore */ }
+    streaming = false;
+    webcamCanvas.style.display = 'none';
+    startWebcamBtn.disabled = false;
+    stopWebcamBtn.disabled = true;
+    // if there is no preview image, hide preview
+    if (!previewEl.src) previewEl.style.display = 'none';
+  }
+
+  // file input and preview
+  fileInput.addEventListener('change', (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    previewEl.src = url;
+    previewEl.style.display = 'block';
+    // if webcam is active, keep it running but user will see the preview image
+    // enable prediction
+    runPredictBtn.disabled = false;
+  });
+
+  clearPreviewBtn.addEventListener('click', () => {
+    if (previewEl.src) {
+      previewEl.src = '';
+      previewEl.style.display = 'none';
+      fileInput.value = '';
+    }
+  });
+
+  // prediction functions
+  async function predictFromImageElement(imgEl) {
+    if (!model) {
+      alert('Model is not loaded yet.');
+      return;
+    }
+    try {
+      // tmImage expects an HTMLImageElement, Video, or Canvas
+      const prediction = await model.predict(imgEl, false);
+      updatePredictions(prediction);
+    } catch (err) {
+      console.error('Prediction error', err);
+    }
+  }
+
+  async function predictFromWebcamCanvas() {
+    if (!model) {
+      alert('Model is not loaded yet.');
+      return;
+    }
+    if (!streaming) {
+      alert('Webcam is not running.');
+      return;
+    }
+    try {
+      // use the canvas we draw webcam frames to
+      const prediction = await model.predict(webcamCanvas, false);
+      updatePredictions(prediction);
+    } catch (err) {
+      console.error('Prediction error', err);
+    }
+  }
+
+  function updatePredictions(predictionArray) {
+    // predictionArray is array of {className, probability}
+    predictionArray.forEach((p, i) => {
+      const pct = Math.round(p.probability * 100);
+      const bar = document.getElementById('bar-' + i);
+      const pctLabel = document.getElementById('pct-' + i);
+      bar.style.width = pct + '%';
+      pctLabel.textContent = pct + '%';
+      const label = document.getElementById('label-' + i);
+      if (label) label.textContent = p.className;
+    });
+
+    // visually highlight top prediction
+    let top = predictionArray[0];
+    for (const p of predictionArray) {
+      if (p.probability > top.probability) top = p;
     }
 
-    async function loop() {
-        webcam.update(); // update the webcam frame
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+    // show short announcement
+    const topText = top ? (top.className + ' (' + Math.round(top.probability * 100) + '%)') : 'No prediction';
+    // temporary accessible announcement
+    const live = document.createElement('div');
+    live.setAttribute('aria-live','polite');
+    live.style.position = 'absolute';
+    live.style.left = '-9999px';
+    live.textContent = 'Top result, ' + topText;
+    document.body.appendChild(live);
+    setTimeout(() => document.body.removeChild(live), 1200);
+  }
 
-    // run the webcam image through the image model
-    async function predict() {
-        // predict can take in an image, video or canvas html element
-        const prediction = await model.predict(webcam.canvas);
-        for (let i = 0; i < maxPredictions; i++) {
-            const classPrediction =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-            labelContainer.childNodes[i].innerHTML = classPrediction;
-        }
-    }
-</script>
+  // event wiring
+  startWebcamBtn.addEventListener('click', async () => {
+    await startWebcam();
+  });
+  stopWebcamBtn.addEventListener('click', () => {
+    stopWebcam();
+  });
+
+  runPredictBtn.addEventListene
