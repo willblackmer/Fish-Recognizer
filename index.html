@@ -2,135 +2,124 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fish Recognizer</title>
 
 <style>
     body {
         margin: 0;
-        padding: 0;
-        font-family: Inter, Arial, sans-serif;
-        background: #f3f0ea;
-        color: #2c2c2c;
+        font-family: Poppins, Arial, sans-serif;
+        background: url('https://i.imgur.com/2bYkpsP.jpg') no-repeat center center fixed;
+        background-size: cover;
+        color: #ffffff;
+    }
+
+    .overlay {
+        background: rgba(0,0,0,0.45);
+        position: fixed;
+        inset: 0;
+        backdrop-filter: blur(2px);
     }
 
     header {
-        background: #4f5b45;
-        padding: 22px;
         text-align: center;
-        color: white;
-        font-size: 24px;
-        letter-spacing: 1px;
-    }
-
-    .wrapper {
-        max-width: 880px;
-        margin: auto;
-        padding: 20px;
-    }
-
-    .intro {
-        background: #ffffff;
-        padding: 22px;
-        border-radius: 8px;
-        font-size: 17px;
-        line-height: 1.5;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.09);
-        margin-bottom: 20px;
+        padding: 26px 10px;
+        font-size: 40px;
+        font-weight: 700;
+        color: #fdfdfd;
+        z-index: 10;
+        position: relative;
     }
 
     .card {
-        background: #ffffff;
+        max-width: 900px;
+        margin: 20px auto;
+        background: rgba(255,255,255,0.17);
         padding: 24px;
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        border-radius: 14px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+        z-index: 10;
+        position: relative;
         text-align: center;
     }
 
     .controls {
         display: flex;
         justify-content: center;
-        gap: 14px;
+        gap: 16px;
         flex-wrap: wrap;
-        margin-bottom: 18px;
+        margin-top: 10px;
+        margin-bottom: 20px;
     }
 
     button, input[type="file"] {
-        background: #617155;
+        background: #2d7e6b;
         border: none;
-        padding: 12px 18px;
+        padding: 14px 22px;
         color: white;
-        border-radius: 6px;
-        font-size: 16px;
+        border-radius: 8px;
+        font-size: 17px;
         cursor: pointer;
+        transition: 0.2s;
     }
 
     button:hover, input[type="file"]:hover {
-        background: #556449;
+        background: #246758;
     }
 
     #preview {
-        max-width: 300px;
-        border-radius: 8px;
+        max-width: 260px;
+        border-radius: 12px;
         margin-top: 20px;
         display: none;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4);
     }
 
     #webcam-container canvas {
-        border-radius: 8px;
+        border-radius: 12px;
         margin-top: 20px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4);
     }
 
     #label-container {
         margin-top: 18px;
-        font-size: 18px;
-        line-height: 1.4;
+        font-size: 20px;
+        font-weight: 500;
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(0,0,0,0.8);
     }
 
-    .instructions {
-        font-size: 16px;
-        margin-bottom: 15px;
-        color: #3b3b3b;
-    }
 </style>
 </head>
-
 <body>
+
+<div class="overlay"></div>
 
 <header>Fish Recognizer</header>
 
-<div class="wrapper">
+<div class="card">
 
-    <div class="intro">
-        <p>
-            Sometimes I catch a fish and I am not sure what kind it is, so I built this tool.  
-            It helps anyone who fishes and wants quick identification using a photo or camera.
-        </p>
+    <p style="font-size:18px; margin-bottom:20px;">
+        Identify fish using a photo or your camera. Fast, simple, and made for anyone who enjoys the outdoors.
+    </p>
+
+    <div class="controls">
+        <button onclick="init()">Use Camera</button>
+        <label>
+            <input type="file" accept="image/*" onchange="loadImage(event)">
+            Upload Image
+        </label>
     </div>
 
-    <div class="card">
-        <div class="instructions">
-            Choose how you want to identify your fish.  
-            You can upload a photo from your device or use your camera.
-        </div>
+    <img id="preview">
 
-        <div class="controls">
-            <button onclick="init()">Use Camera</button>
-
-            <label>
-                <input type="file" accept="image/*" onchange="loadImage(event)">
-                Upload Image
-            </label>
-        </div>
-
-        <img id="preview">
-
-        <div id="webcam-container"></div>
-        <div id="label-container"></div>
-    </div>
-
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 </div>
 
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
