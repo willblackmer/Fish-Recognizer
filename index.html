@@ -1,152 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fish Recognizer</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: url('your-pond-mountain-forest-image.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-      text-align: center;
-    }
+    <meta charset="UTF-8">
+    <title>Fish Recognizer</title>
 
-    h1 {
-      margin-top: 20px;
-      font-size: 3rem;
-      text-shadow: 2px 2px 4px black;
-    }
-
-    .button {
-      padding: 14px 24px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      background-image: url('wood-texture.jpg');
-      background-size: cover;
-      background-position: center;
-      color: white;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-      margin: 10px;
-    }
-
-    #upload-area {
-      margin-top: 20px;
-      padding: 20px;
-      display: inline-block;
-      background-image: url('wood-texture.jpg');
-      background-size: cover;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
-    }
-
-    #preview {
-      margin-top: 20px;
-      max-width: 70%;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.7);
-    }
-
-    #webcam-panel {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 280px;
-      padding: 15px;
-      background-image: url('wood-texture.jpg');
-      background-size: cover;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.8);
-      text-align: center;
-    }
-
-    #webcam {
-      width: 250px;
-      border-radius: 8px;
-    }
-
-    #prediction-box {
-      margin-top: 20px;
-      padding: 20px;
-      display: inline-block;
-      background-image: url('wood-texture.jpg');
-      background-size: cover;
-      color: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.8);
-      font-size: 1.3rem;
-      min-width: 280px;
-    }
-  </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 </head>
+
 <body>
 
-  <h1>Fish Recognizer</h1>
+    <h1>Fish Recognizer</h1>
 
-  <div id="upload-area">
-    <label class="button" for="file-input">Upload Fish Image</label>
-    <input id="file-input" type="file" accept="image/*" style="display:none" />
-    <button class="button" id="predict-btn">Identify Fish</button>
-  </div>
+    <button onclick="init()">Start</button>
 
-  <img id="preview" />
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 
-  <div id="prediction-box">Prediction will show here</div>
+    <script>
+        const URL = "./my_model/";
 
-  <div id="webcam-panel">
-    <video id="webcam" autoplay></video>
-    <br />
-    <button class="button" id="snap-btn">Capture</button>
-  </div>
+        let model;
+        let webcam;
+        let labelContainer;
+        let maxPredictions;
 
-  <script>
-    const fileInput = document.getElementById('file-input');
-    const preview = document.getElementById('preview');
-    const predictBtn = document.getElementById('predict-btn');
-    const predictionBox = document.getElementById('prediction-box');
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
 
-    const classLabels = {
-      1: 'Largemouth Bass',
-      2: 'Pike',
-      3: 'Blue Gill',
-      4: 'Carp',
-      5: 'Perch',
-      6: 'Catfish',
-      7: 'Trout',
-      8: 'Crappie'
-    };
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
 
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          preview.src = reader.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+            webcam = new tmImage.Webcam(200, 200, true);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
 
-    predictBtn.addEventListener('click', () => {
-      const randomClass = Math.floor(Math.random() * 8) + 1;
-      predictionBox.innerText = 'Detected: ' + classLabels[randomClass];
-    });
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-    const webcam = document.getElementById('webcam');
-    const snapBtn = document.getElementById('snap-btn');
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => webcam.srcObject = stream);
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
 
-    snapBtn.addEventListener('click', () => {
-      predictionBox.innerText = 'Detected: Trout';
-    });
-  </script>
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const text = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = text;
+            }
+        }
+    </script>
 
 </body>
 </html>
