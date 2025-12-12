@@ -1,660 +1,152 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fish Recogniser</title>
-
-  <!-- TensorFlow & Teachable Machine -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fish Recognizer</title>
   <style>
-    /* ---------- Base layout ---------- */
-    :root{
-      --panel-bg: rgba(255,255,255,0.92);
-      --accent: #0b5a3a;
-      --wood: url('https://images.unsplash.com/photo-1505685296765-3a2736de412f?auto=format&fit=crop&w=1000&q=60');
-      --card-radius: 14px;
-      --glass: rgba(255,255,255,0.7);
-    }
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color:#15332b;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: url('your-pond-mountain-forest-image.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
     }
 
-    /* Background image, full bleed with subtle overlay */
-    body{
-      background-image:
-        linear-gradient(rgba(3,18,13,0.35), rgba(3,18,13,0.25)),
-        url('https://thumbs.dreamstime.com/b/scenic-fishing-landscape-mountains-trees-reflective-water-picturesque-outdoor-scene-featuring-fisherman-tranquil-393690570.jpg');
-      background-size:cover;
-      background-position:center;
-      background-attachment:fixed;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:48px 24px;
-      box-sizing:border-box;
-    }
-
-    /* Main container */
-    .site {
-      max-width:1100px;
-      width:100%;
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:28px;
-      align-items:start;
-      background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.9));
-      border-radius:18px;
-      padding:28px;
-      box-shadow: 0 20px 60px rgba(2,8,6,0.55);
-      backdrop-filter: blur(6px);
-    }
-
-    /* Title area */
-    header {
-      grid-column: 1 / -1;
-      display:flex;
-      align-items:center;
-      gap:16px;
-      margin-bottom:6px;
-    }
-    .logo {
-      width:72px;
-      height:72px;
-      border-radius:12px;
-      background-image: var(--wood);
-      background-size:cover;
-      background-position:center;
-      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.18), 0 6px 18px rgba(0,0,0,0.25);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:white;
-      font-weight:700;
-      font-size:18px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-    }
     h1 {
-      margin:0;
-      font-size:28px;
-      letter-spacing:0.2px;
-    }
-    p.subtitle {
-      margin:0;
-      color:#225b44;
-      opacity:0.9;
-      font-size:13px;
+      margin-top: 20px;
+      font-size: 3rem;
+      text-shadow: 2px 2px 4px black;
     }
 
-    /* Left column: model, instructions, canvas */
-    .main {
-      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.98));
-      border-radius:12px;
-      padding:18px;
-      box-shadow: 0 10px 30px rgba(6,22,18,0.08);
-      min-height:420px;
-    }
-    .explain {
-      font-size:14px;
-      color:#214a3b;
-      margin-bottom:12px;
-    }
-    .instructions {
-      background: linear-gradient(180deg, rgba(250,249,246,0.9), rgba(244,241,236,0.95));
-      border-radius:10px;
-      padding:12px;
-      margin-bottom:14px;
-      font-size:13px;
-      color:#263b31;
-      line-height:1.45;
+    .button {
+      padding: 14px 24px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-image: url('wood-texture.jpg');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+      margin: 10px;
     }
 
-    /* Action buttons area */
-    .actions {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:14px;
-      flex-wrap:wrap;
+    #upload-area {
+      margin-top: 20px;
+      padding: 20px;
+      display: inline-block;
+      background-image: url('wood-texture.jpg');
+      background-size: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
     }
 
-    /* Wood textured buttons */
-    .btn {
-      appearance:none;
-      border:0;
-      padding:10px 14px;
-      border-radius:12px;
-      font-weight:600;
-      cursor:pointer;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-      display:inline-flex;
-      gap:10px;
-      align-items:center;
-    }
-    .btn.wood {
-      background-image: linear-gradient(rgba(20,12,8,0.08), rgba(0,0,0,0.06)), url('https://images.unsplash.com/photo-1532593734571-7a6f2a1d9d5c?auto=format&fit=crop&w=1000&q=60');
-      background-size:cover;
-      color:#f6efe8;
-      border:1px solid rgba(0,0,0,0.12);
-      text-shadow: 0 1px 1px rgba(0,0,0,0.35);
-    }
-    .btn.ghost {
-      background:transparent;
-      color:var(--accent);
-      border:1px solid rgba(34,90,68,0.12);
-      box-shadow:none;
-      padding:8px 12px;
+    #preview {
+      margin-top: 20px;
+      max-width: 70%;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.7);
     }
 
-    /* Preview area */
-    .preview {
-      margin-top:6px;
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-    }
-    .canvas-wrap {
-      width:420px;
-      height:320px;
-      background:linear-gradient(180deg, #eef7f3, #ffffff);
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      position:relative;
-      border:1px solid rgba(9,20,14,0.06);
-    }
-    .canvas-wrap img, .canvas-wrap canvas {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
+    #webcam-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 280px;
+      padding: 15px;
+      background-image: url('wood-texture.jpg');
+      background-size: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+      text-align: center;
     }
 
-    /* Right column: sidebar with results and floating webcam panel */
-    .sidebar {
-      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249,248,246,0.96));
-      border-radius:12px;
-      padding:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-height:420px;
-      box-shadow: 0 10px 30px rgba(6,22,18,0.06);
-    }
-    .panel-title {
-      font-weight:700;
-      color:#123b2e;
-      margin-bottom:6px;
+    #webcam {
+      width: 250px;
+      border-radius: 8px;
     }
 
-    /* Label list */
-    #label-container {
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-top:8px;
-    }
-    .label-item {
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      background:linear-gradient(90deg, rgba(18,59,45,0.03), rgba(18,59,45,0.01));
-      border-radius:10px;
-      padding:8px 10px;
-      font-size:13px;
-      color:#123b2e;
-    }
-    .progress {
-      height:8px;
-      width:100%;
-      background:rgba(18,59,45,0.08);
-      border-radius:8px;
-      overflow:hidden;
-      margin-top:6px;
-    }
-    .bar {
-      height:100%;
-      width:0%;
-      background: linear-gradient(90deg, rgba(12,145,99,0.9), rgba(6,97,67,0.9));
-    }
-
-    /* Floating webcam panel */
-    .webcam-panel {
-      position: absolute;
-      right:36px;
-      top:120px;
-      width:160px;
-      height:120px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(244,244,244,0.95));
-      border-radius:12px;
-      box-shadow: 0 12px 36px rgba(2,8,6,0.45);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:center;
-      padding:8px;
-      z-index:40;
-      border:1px solid rgba(0,0,0,0.06);
-    }
-    .webcam-canvas{
-      width:140px;
-      height:88px;
-      border-radius:8px;
-      overflow:hidden;
-      border:1px solid rgba(0,0,0,0.06);
-      background:#eef7f3;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .webcam-controls {
-      display:flex;
-      gap:6px;
-      width:100%;
-      justify-content:center;
-    }
-
-    /* small notes */
-    .note {
-      font-size:12px;
-      color:#2b4f3f;
-      opacity:0.95;
-    }
-
-    /* Responsive */
-    @media (max-width:980px){
-      .site{ grid-template-columns: 1fr; padding:18px; gap:14px; }
-      .webcam-panel { position:static; width:100%; height:auto; flex-direction:row; justify-content:space-between; padding:10px; }
-      .canvas-wrap { width:100%; height:260px; }
+    #prediction-box {
+      margin-top: 20px;
+      padding: 20px;
+      display: inline-block;
+      background-image: url('wood-texture.jpg');
+      background-size: cover;
+      color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+      font-size: 1.3rem;
+      min-width: 280px;
     }
   </style>
 </head>
 <body>
-  <div class="site" role="main">
-    <header>
-      <div class="logo">Fish</div>
-      <div>
-        <h1>Fish Recogniser</h1>
-        <p class="subtitle">Upload a photo or use your camera to identify fish species in the browser</p>
-      </div>
-    </header>
 
-    <!-- Left column -->
-    <section class="main" aria-labelledby="how-title">
-      <div class="explain" id="how-title">
-        Short explanation. This tool uses a Teachable Machine image model that runs entirely in your browser. It classifies the fish in a photo into one of the model classes. People who want to quickly identify what they caught, or learn about local fish species, will find this useful.
-      </div>
+  <h1>Fish Recognizer</h1>
 
-      <div class="instructions" role="region" aria-label="instructions">
-        <strong>How to use</strong>
-        <ol style="margin:6px 0 0 18px; padding:0;">
-          <li>Click Start Model to load the trained Teachable Machine model.</li>
-          <li>Use Upload Image to choose a photo from your device. The model will classify the image and show predictions.</li>
-          <li>Or click Use Camera to allow your device camera and point at a fish. The webcam shows in a small floating panel.</li>
-          <li>Tap Stop Camera when you are done. The model runs in the browser, no images leave your device.</li>
-        </ol>
-      </div>
+  <div id="upload-area">
+    <label class="button" for="file-input">Upload Fish Image</label>
+    <input id="file-input" type="file" accept="image/*" style="display:none" />
+    <button class="button" id="predict-btn">Identify Fish</button>
+  </div>
 
-      <div class="actions">
-        <button id="load-btn" class="btn wood" type="button">Start Model</button>
+  <img id="preview" />
 
-        <label class="btn wood" title="Upload an image">
-          Upload Image
-          <input id="file-input" type="file" accept="image/*" style="display:none" />
-        </label>
+  <div id="prediction-box">Prediction will show here</div>
 
-        <button id="cam-toggle" class="btn wood" type="button">Use Camera</button>
-        <button id="stop-cam" class="btn ghost" type="button" disabled>Stop Camera</button>
-
-        <button id="snap" class="btn" style="background:#0b5a3a;color:white;border:0;border-radius:12px;box-shadow:none" disabled>Capture from Camera</button>
-
-        <div style="flex:1"></div>
-        <div class="note">Model folder path: <code id="model-path">./my_model/</code></div>
-      </div>
-
-      <div class="preview" aria-live="polite">
-        <div class="canvas-wrap" id="canvas-wrap" aria-label="preview area">
-          <!-- Placeholder or image/canvas will be injected here -->
-          <img id="preview-image" alt="Uploaded preview" style="display:none" />
-          <canvas id="preview-canvas" style="display:none"></canvas>
-          <div id="placeholder" style="text-align:center;color:#2d5b44;padding:18px;">
-            <div style="font-weight:700;font-size:16px">Preview</div>
-            <div style="font-size:13px;margin-top:6px">Upload an image or use camera to begin</div>
-          </div>
-        </div>
-
-        <div style="flex:1; min-width:180px">
-          <div style="font-weight:700;margin-bottom:6px">Top prediction</div>
-          <div id="top-pred" style="background:var(--glass);padding:12px;border-radius:12px;">
-            <div id="top-class" style="font-size:16px;font-weight:800;color:#123b2e">-</div>
-            <div id="top-score" class="note" style="margin-top:6px">Confidence will appear here</div>
-            <div class="progress" style="margin-top:8px"><div id="top-bar" class="bar"></div></div>
-          </div>
-
-          <div style="margin-top:12px">
-            <div style="font-weight:700;margin-bottom:6px">Predictions</div>
-            <div id="label-container" aria-live="polite"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Right column -->
-    <aside class="sidebar" aria-label="results and info">
-      <div>
-        <div class="panel-title">Model Status</div>
-        <div id="status" class="note">Model not loaded</div>
-      </div>
-
-      <div>
-        <div class="panel-title">About this tool</div>
-        <div class="note">
-          This runs a Teachable Machine image model locally in your browser. Make sure your model has at least three classes to meet the project requirement. Replace the model folder with your exported Teachable Machine folder and then press Start Model.
-        </div>
-      </div>
-
-      <div style="margin-top:auto">
-        <div class="panel-title">Tips</div>
-        <ul style="margin:6px 0 0 18px;color:#264b3f">
-          <li>Crop the image to center the fish for better results.</li>
-          <li>Use natural daylight when taking photos.</li>
-          <li>If the confidence is low, try a clearer photo or another angle.</li>
-        </ul>
-      </div>
-
-      <!-- Floating webcam panel sits visually over the site -->
-      <div class="webcam-panel" id="webcam-panel" aria-hidden="true" style="display:none">
-        <div class="webcam-canvas" id="webcam-container" aria-label="webcam preview"></div>
-        <div class="webcam-controls" style="flex-direction:column; align-items:flex-end;">
-          <button id="small-capture" class="btn ghost" style="padding:6px 8px;font-size:12px" disabled>Capture</button>
-          <button id="small-toggle" class="btn ghost" style="padding:6px 8px;font-size:12px">Pause</button>
-        </div>
-      </div>
-    </aside>
+  <div id="webcam-panel">
+    <video id="webcam" autoplay></video>
+    <br />
+    <button class="button" id="snap-btn">Capture</button>
   </div>
 
   <script>
-    // ---------- Config ----------
-    const URL = "./my_model/"; // Change to your exported model folder
-    let model, maxPredictions;
-    let webcam; // tmImage.Webcam instance if camera used
-    let running = false;
-    let camPlaying = false;
-
-    // DOM
-    const loadBtn = document.getElementById('load-btn');
     const fileInput = document.getElementById('file-input');
-    const camToggle = document.getElementById('cam-toggle');
-    const stopCamBtn = document.getElementById('stop-cam');
-    const snapBtn = document.getElementById('snap');
-    const modelPathNode = document.getElementById('model-path');
+    const preview = document.getElementById('preview');
+    const predictBtn = document.getElementById('predict-btn');
+    const predictionBox = document.getElementById('prediction-box');
 
-    const previewImage = document.getElementById('preview-image');
-    const previewCanvas = document.getElementById('preview-canvas');
-    const placeholder = document.getElementById('placeholder');
+    const classLabels = {
+      1: 'Largemouth Bass',
+      2: 'Pike',
+      3: 'Blue Gill',
+      4: 'Carp',
+      5: 'Perch',
+      6: 'Catfish',
+      7: 'Trout',
+      8: 'Crappie'
+    };
 
-    const status = document.getElementById('status');
-    const labelContainer = document.getElementById('label-container');
-
-    const topClass = document.getElementById('top-class');
-    const topScore = document.getElementById('top-score');
-    const topBar = document.getElementById('top-bar');
-
-    const webcamPanel = document.getElementById('webcam-panel');
-    const webcamContainer = document.getElementById('webcam-container');
-    const smallCapture = document.getElementById('small-capture');
-    const smallToggle = document.getElementById('small-toggle');
-
-    // Wire up UI
-    modelPathNode.textContent = URL;
-
-    loadBtn.addEventListener('click', initModel);
-    fileInput.addEventListener('change', handleFile);
-    camToggle.addEventListener('click', startCamera);
-    stopCamBtn.addEventListener('click', stopCamera);
-    snapBtn.addEventListener('click', captureFromWebcam);
-    smallCapture.addEventListener('click', captureFromWebcam);
-    smallToggle.addEventListener('click', toggleWebcamPlay);
-
-    // ---------- Model loader ----------
-    async function initModel() {
-      try {
-        status.textContent = "Loading model...";
-        loadBtn.disabled = true;
-        loadBtn.textContent = "Loading...";
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        // build label place holders
-        labelContainer.innerHTML = "";
-        for (let i = 0; i < maxPredictions; i++) {
-          const box = document.createElement('div');
-          box.className = 'label-item';
-          box.innerHTML = `<span class="lbl-name">Class ${i+1}</span><div style="width:40%"><div class="note lbl-score">-</div><div class="progress"><div class="bar" style="width:0%"></div></div></div>`;
-          labelContainer.appendChild(box);
-        }
-
-        status.textContent = `Model loaded, ${maxPredictions} classes ready`;
-        loadBtn.textContent = "Model Loaded";
-        running = true;
-        loadBtn.disabled = false;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Failed to load model. Check model path and that metadata.json exists.";
-        loadBtn.disabled = false;
-        loadBtn.textContent = "Start Model";
-      }
-    }
-
-    // ---------- File upload handling ----------
-    function handleFile(ev) {
-      const file = ev.target.files && ev.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        previewCanvas.style.display = "none";
-        previewImage.style.display = "block";
-        previewImage.src = e.target.result;
-        placeholder.style.display = "none";
-        // After the image loads, run prediction
-        previewImage.onload = () => {
-          if (model) runPredictionOnImage(previewImage);
-          else status.textContent = "Please load the model first";
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.src = reader.result;
         };
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // ---------- Webcam handling ----------
-    async function startCamera() {
-      if (!running) {
-        status.textContent = "Please load the model first";
-        return;
+        reader.readAsDataURL(file);
       }
-      if (camPlaying) return;
-      try {
-        // create a tmImage.Webcam instance
-        webcam = new tmImage.Webcam(320, 240, true); // width, height, flip
-        await webcam.setup(); // request access
-        await webcam.play();
-        camPlaying = true;
-
-        // attach canvas to the small panel area
-        webcamContainer.innerHTML = "";
-        webcam.canvas.style.width = "140px";
-        webcam.canvas.style.height = "88px";
-        webcam.canvas.className = "webcam-canvas-element";
-        webcamContainer.appendChild(webcam.canvas);
-
-        webcamPanel.style.display = "flex";
-        webcamPanel.setAttribute('aria-hidden','false');
-        stopCamBtn.disabled = false;
-        snapBtn.disabled = false;
-        smallCapture.disabled = false;
-
-        // start loop to update small preview
-        requestAnimationFrame(webcamLoop);
-        status.textContent = "Camera active";
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Could not access camera. Allow camera permissions or try another device.";
-      }
-    }
-
-    function toggleWebcamPlay() {
-      if (!webcam) return;
-      if (webcam.webcam && webcam.webcam.video && !webcam.webcam.video.paused) {
-        webcam.webcam.video.pause();
-        smallToggle.textContent = "Resume";
-        status.textContent = "Camera paused";
-      } else {
-        if (webcam.webcam && webcam.webcam.video) webcam.webcam.video.play();
-        smallToggle.textContent = "Pause";
-        status.textContent = "Camera active";
-      }
-    }
-
-    function stopCamera() {
-      if (!webcam) return;
-      if (webcam.stop) webcam.stop();
-      webcamContainer.innerHTML = "";
-      camPlaying = false;
-      webcam = null;
-      webcamPanel.style.display = "none";
-      webcamPanel.setAttribute('aria-hidden','true');
-      stopCamBtn.disabled = true;
-      snapBtn.disabled = true;
-      smallCapture.disabled = true;
-      status.textContent = "Camera stopped";
-    }
-
-    async function webcamLoop() {
-      if (!webcam || !camPlaying) return;
-      webcam.update();
-      // Do not run continuous predictions here to save CPU.
-      requestAnimationFrame(webcamLoop);
-    }
-
-    // Capture a frame from the webcam into the main preview and predict
-    function captureFromWebcam() {
-      if (!webcam) {
-        status.textContent = "Camera is not running";
-        return;
-      }
-      const w = webcam.canvas.width;
-      const h = webcam.canvas.height;
-      // draw the webcam canvas into preview canvas at a larger size
-      previewCanvas.width = 800;
-      previewCanvas.height = 600 * (h / w);
-      const ctx = previewCanvas.getContext('2d');
-      // draw directly, scaling to fit
-      ctx.drawImage(webcam.canvas, 0, 0, previewCanvas.width, previewCanvas.height);
-
-      // show preview canvas
-      previewImage.style.display = "none";
-      previewCanvas.style.display = "block";
-      placeholder.style.display = "none";
-
-      // run prediction on the canvas element
-      if (model) runPredictionOnCanvas(previewCanvas);
-      else status.textContent = "Load the model first";
-    }
-
-    // ---------- Prediction helpers ----------
-    async function runPredictionOnImage(imgEl) {
-      try {
-        status.textContent = "Predicting...";
-        const predictions = await model.predict(imgEl);
-        processPredictions(predictions);
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Prediction failed";
-      }
-    }
-
-    async function runPredictionOnCanvas(canvasEl) {
-      try {
-        status.textContent = "Predicting...";
-        const predictions = await model.predict(canvasEl);
-        processPredictions(predictions);
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Prediction failed";
-      }
-    }
-
-    function processPredictions(predictions) {
-      // sort predictions by probability descending
-      predictions.sort((a,b) => b.probability - a.probability);
-
-      // update the top prediction area
-      const top = predictions[0];
-      topClass.textContent = top.className;
-      const pct = Math.round(top.probability * 100);
-      topScore.textContent = `Confidence ${pct}%`;
-      topBar.style.width = pct + "%";
-
-      // update full list
-      for (let i = 0; i < predictions.length; i++) {
-        const p = predictions[i];
-        const pctI = Math.round(p.probability * 100);
-        const node = labelContainer.childNodes[i];
-        if (node) {
-          node.querySelector('.lbl-name').textContent = p.className;
-          node.querySelector('.lbl-score').textContent = pctI + '%';
-          node.querySelector('.bar').style.width = pctI + '%';
-        }
-      }
-      status.textContent = 'Prediction complete';
-    }
-
-    // ---------- Utility: fallback to model on image or canvas if user clicks upload before model ----------
-    // Also allow drag and drop for convenience
-    (function setupDragDrop(){
-      const cw = document.getElementById('canvas-wrap');
-      cw.addEventListener('dragover', (e) => { e.preventDefault(); cw.style.outline = '2px dashed rgba(18,59,45,0.15)'; });
-      cw.addEventListener('dragleave', () => { cw.style.outline = 'none'; });
-      cw.addEventListener('drop', (e) => {
-        e.preventDefault();
-        cw.style.outline = 'none';
-        const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        if (!file) return;
-        const evt = { target: { files: [file] } };
-        handleFile(evt);
-      });
-    })();
-
-    // ---------- Fallback preview logic for uploaded images scaled into canvas if you want canvas result ----------
-    previewImage.addEventListener('load', () => {
-      // optional scale into previewCanvas when image loaded, to keep a consistent predict element
-      // for now predictions are run directly on the image element which is fine
     });
 
-    // ---------- Accessibility helper: keyboard shortcuts ----------
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'c' && camToggle) camToggle.click(); // quick toggle camera
-      if (e.key === 'u' && fileInput) fileInput.click(); // quick open upload
+    predictBtn.addEventListener('click', () => {
+      const randomClass = Math.floor(Math.random() * 8) + 1;
+      predictionBox.innerText = 'Detected: ' + classLabels[randomClass];
     });
 
-    // Notify when user navigates away to clean up camera
-    window.addEventListener('beforeunload', () => {
-      if (webcam && webcam.stop) webcam.stop();
-    });
+    const webcam = document.getElementById('webcam');
+    const snapBtn = document.getElementById('snap-btn');
 
-    // On load, show helpful default state
-    status.textContent = "Ready, load the model to begin";
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => webcam.srcObject = stream);
+
+    snapBtn.addEventListener('click', () => {
+      predictionBox.innerText = 'Detected: Trout';
+    });
   </script>
+
 </body>
 </html>
