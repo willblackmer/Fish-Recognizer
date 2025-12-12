@@ -8,102 +8,118 @@
 <style>
     body {
         margin: 0;
+        padding: 0;
         font-family: Inter, Arial, sans-serif;
-        background: #f2eee6;
-        color: #2b2b2b;
+        background: #f3f0ea;
+        color: #2c2c2c;
     }
 
     header {
-        background: #4a5a47;
-        padding: 18px 24px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
+        background: #4f5b45;
+        padding: 22px;
+        text-align: center;
         color: white;
+        font-size: 24px;
+        letter-spacing: 1px;
     }
 
-    .logo svg {
-        width: 46px;
-        height: 46px;
-    }
-
-    .container {
-        max-width: 900px;
+    .wrapper {
+        max-width: 880px;
         margin: auto;
         padding: 20px;
-        text-align: center;
+    }
+
+    .intro {
+        background: #ffffff;
+        padding: 22px;
+        border-radius: 8px;
+        font-size: 17px;
+        line-height: 1.5;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+        margin-bottom: 20px;
     }
 
     .card {
         background: #ffffff;
-        border-radius: 10px;
         padding: 24px;
-        margin-top: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    button, input[type="file"] {
-        padding: 12px 20px;
-        background: #5e7152;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 15px;
-        cursor: pointer;
-    }
-
-    button:hover, input[type="file"]:hover {
-        background: #4f6144;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        text-align: center;
     }
 
     .controls {
         display: flex;
         justify-content: center;
-        gap: 12px;
+        gap: 14px;
         flex-wrap: wrap;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
+    }
+
+    button, input[type="file"] {
+        background: #617155;
+        border: none;
+        padding: 12px 18px;
+        color: white;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover, input[type="file"]:hover {
+        background: #556449;
     }
 
     #preview {
-        max-width: 280px;
+        max-width: 300px;
         border-radius: 8px;
-        margin-top: 18px;
+        margin-top: 20px;
         display: none;
     }
 
     #webcam-container canvas {
         border-radius: 8px;
+        margin-top: 20px;
     }
 
     #label-container {
-        margin-top: 16px;
+        margin-top: 18px;
         font-size: 18px;
+        line-height: 1.4;
+    }
+
+    .instructions {
+        font-size: 16px;
+        margin-bottom: 15px;
+        color: #3b3b3b;
     }
 </style>
 </head>
 
 <body>
 
-<header>
-    <div class="logo">
-        <svg viewBox="0 0 64 64">
-            <path d="M12 8 C22 20, 22 44, 12 56" stroke="white" stroke-width="3" fill="none"/>
-            <ellipse cx="42" cy="32" rx="18" ry="10" fill="none" stroke="white" stroke-width="3"/>
-            <circle cx="48" cy="30" r="2" fill="white"/>
-        </svg>
-    </div>
-    <h1 style="margin:0; font-size:24px;">Fish Recognizer</h1>
-</header>
+<header>Fish Recognizer</header>
 
-<div class="container">
+<div class="wrapper">
+
+    <div class="intro">
+        <p>
+            Sometimes I catch a fish and I am not sure what kind it is, so I built this tool.  
+            It helps anyone who fishes and wants quick identification using a photo or camera.
+        </p>
+    </div>
+
     <div class="card">
-        <p style="font-size:17px;">Upload a fish photo or use your camera to identify the species.</p>
+        <div class="instructions">
+            Choose how you want to identify your fish.  
+            You can upload a photo from your device or use your camera.
+        </div>
 
         <div class="controls">
             <button onclick="init()">Use Camera</button>
+
             <label>
                 <input type="file" accept="image/*" onchange="loadImage(event)">
-                Upload Photo
+                Upload Image
             </label>
         </div>
 
@@ -112,6 +128,7 @@
         <div id="webcam-container"></div>
         <div id="label-container"></div>
     </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -127,11 +144,11 @@
             const metadataURL = URL + "metadata.json";
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
-            setupLabelContainer();
+            setupLabels();
         }
     }
 
-    function setupLabelContainer() {
+    function setupLabels() {
         labelContainer = document.getElementById("label-container");
         labelContainer.innerHTML = "";
         for (let i = 0; i < maxPredictions; i++) {
@@ -142,15 +159,12 @@
     async function init() {
         await loadModelIfNeeded();
 
-        const flip = true;
-        webcam = new tmImage.Webcam(260, 260, flip);
-
+        webcam = new tmImage.Webcam(280, 280, true);
         await webcam.setup();
         await webcam.play();
 
         document.getElementById("webcam-container").innerHTML = "";
         document.getElementById("webcam-container").appendChild(webcam.canvas);
-
         document.getElementById("preview").style.display = "none";
 
         window.requestAnimationFrame(loop);
@@ -165,22 +179,22 @@
     async function loadImage(event) {
         await loadModelIfNeeded();
 
-        const imgEl = document.getElementById("preview");
-        imgEl.src = URL.createObjectURL(event.target.files[0]);
-        imgEl.style.display = "block";
+        const img = document.getElementById("preview");
+        img.src = URL.createObjectURL(event.target.files[0]);
+        img.style.display = "block";
 
         document.getElementById("webcam-container").innerHTML = "";
 
-        await imgEl.onload;
-
-        predict(imgEl);
+        img.onload = () => {
+            predict(img);
+        };
     }
 
     async function predict(source) {
         const prediction = await model.predict(source);
 
         for (let i = 0; i < prediction.length; i++) {
-            const item = prediction[i];
+            let item = prediction[i];
             labelContainer.childNodes[i].innerHTML =
                 item.className + ": " + item.probability.toFixed(2);
         }
