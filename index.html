@@ -31,6 +31,7 @@
         margin: 30px auto;
         padding: 20px;
         border-radius: 12px;
+        text-align: center;
     }
 
     button {
@@ -62,6 +63,12 @@
         font-size: 20px;
         margin-top: 4px;
     }
+
+    canvas {
+        margin-top: 15px;
+        background: rgba(255,255,255,0.9);
+        border-radius: 50%;
+    }
 </style>
 </head>
 
@@ -86,6 +93,9 @@
 
     <div id="webcam-container"></div>
     <div id="label-container"></div>
+
+    <!-- Pie chart -->
+    <canvas id="pieChart" width="300" height="300"></canvas>
 </div>
 
 <script>
@@ -124,10 +134,42 @@
 
     async function predict() {
         const prediction = await model.predict(webcam.canvas);
+
         for (let i = 0; i < maxPredictions; i++) {
+            const percent = (prediction[i].probability * 100).toFixed(1);
             labelContainer.childNodes[i].innerHTML =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                prediction[i].className + ": " + percent + "%";
         }
+
+        drawPieChart(prediction);
+    }
+
+    function drawPieChart(prediction) {
+        const canvas = document.getElementById("pieChart");
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let startAngle = 0;
+
+        const colors = [
+            "#4CAF50", "#2196F3", "#FFC107", "#FF5722",
+            "#9C27B0", "#00BCD4", "#8BC34A", "#795548"
+        ];
+
+        prediction.forEach((p, index) => {
+            const sliceAngle = p.probability * 2 * Math.PI;
+
+            ctx.beginPath();
+            ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 140, startAngle, startAngle + sliceAngle);
+            ctx.closePath();
+
+            ctx.fillStyle = colors[index % colors.length];
+            ctx.fill();
+
+            startAngle += sliceAngle;
+        });
     }
 </script>
 
