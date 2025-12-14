@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Fish Recognizer</title>
 
-<!-- TensorFlow and Teachable Machine -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
@@ -12,7 +11,7 @@
     body {
         margin: 0;
         font-family: Arial, sans-serif;
-        background: url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920") center center fixed;
+        background: url("https://images.unsplash.com/photo-1476610182048-b716b8518aae?q=80&w=1920") center center fixed;
         background-size: cover;
         color: white;
         text-shadow: 2px 2px 4px black;
@@ -26,18 +25,18 @@
     }
 
     .panel {
-        background: rgba(0, 0, 0, 0.55);
+        background: rgba(0, 0, 0, 0.6);
         padding: 20px;
         width: 420px;
         margin: 30px auto;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.7);
     }
 
     button {
         padding: 14px 26px;
         font-size: 18px;
-        background: #5a3c20;
+        background: #4a3623;
         color: white;
         border: none;
         border-radius: 10px;
@@ -46,7 +45,7 @@
     }
 
     button:hover {
-        background: #7a5430;
+        background: #6b4b2f;
     }
 
     #webcam-container {
@@ -78,7 +77,7 @@
 <div class="panel">
     <h2>What This Project Does</h2>
     <p>
-        I made this tool so that I could identify a fish that I caught. Many people enjoy fishing but do not always know what species they pulled from the water. This project gives a fast and simple way to identify fish using a camera.
+        I made this tool so that I could identify a fish that I caught. Many people who fish do not always know what species they have caught, especially in northern lakes. This tool gives anglers a quick way to identify fish using a camera.
     </p>
 
     <h2>How To Use It</h2>
