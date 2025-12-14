@@ -12,7 +12,7 @@
     body {
         margin: 0;
         font-family: Arial, sans-serif;
-        background: url("https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920") center center fixed;
+        background: url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920") center center fixed;
         background-size: cover;
         color: white;
         text-shadow: 2px 2px 4px black;
@@ -83,10 +83,9 @@
 
     <h2>How To Use It</h2>
     <p>
-        1. Press Start to turn on your camera.  
-        2. Hold the fish in front of the camera.  
-        3. The model will read the image and show the name of the fish along with a score.  
-        Higher scores mean a stronger match.
+        1. Press Start to turn on your camera.<br>
+        2. Hold the fish in front of the camera.<br>
+        3. The model will read the image and show the name of the fish along with a score.
     </p>
 
     <button onclick="init()">Start</button>
@@ -119,21 +118,8 @@
 
         labelContainer = document.getElementById("label-container");
 
-        const fishLabels = [
-            "Largemouth Bass",
-            "Salmon",
-            "Pike",
-            "Bluegill",
-            "Carp",
-            "Catfish",
-            "Perch",
-            "Crappie"
-        ];
-
         for (let i = 0; i < maxPredictions; i++) {
-            const div = document.createElement("div");
-            div.textContent = fishLabels[i] + ": 0.00";
-            labelContainer.appendChild(div);
+            labelContainer.appendChild(document.createElement("div"));
         }
     }
 
